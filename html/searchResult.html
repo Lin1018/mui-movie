@@ -1,0 +1,212 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link rel="stylesheet" href="../css/style.css" />
+		<style type="text/css">
+			.mui-bar-nav
+			{
+			    -webkit-box-shadow: none;
+			    box-shadow: none;
+			}
+			.img-item {
+				width: 60px;
+				height: 90px;
+				margin-right: 10px;
+			}	
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+		    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+		    <h1 class="mui-title">搜索结果</h1>
+		</header>
+		<div id="mui-content" class="mui-content">
+			<!--下拉刷新容器-->
+			<div id="refreshContainer" class="mui-scroll-wrapper">
+				<!--数据列表-->
+				<ul class="mui-table-view">
+					<li class="mui-table-view-cell" v-for="item in movies" @tap="openDetail(item)">
+						<img :src="item.cover" alt="图片" class="mui-pull-left img-item" />
+						<div class="dark-big mui-ellipsis">
+							{{item.title}}
+						</div>
+						<div class="mui-ellipsis">
+							<span class="gray-small">
+								{{item.genres}}
+							</span>&nbsp;
+							<span class="orange-small" v-if="item.score>0">
+								{{item.score}}分
+							</span>
+							<span class="orange-small" v-else>
+								暂无评分
+							</span>
+						</div>
+						<div class="mui-ellipsis gray-small">
+							导演：{{item.directors}}
+						</div>
+						<div class="mui-ellipsis gray-small">
+							主演：{{item.casts}}
+						</div>
+					</li>	
+				</ul>
+			</div>	    
+		</div>
+		
+		<script src="../js/mui.min.js"></script>
+		<script type="text/javascript" src="../js/vue.min.js"></script>
+		<script type="text/javascript">
+			var vm = new Vue({
+				el: '#mui-content',
+				data: {
+					movies: []
+				}
+			})
+			mui.init({  
+			  pullRefresh: {
+			    container:"#refreshContainer",//下拉刷新容器标识，querySelector能定位的css选择器均可，比如：id、.class等
+			    down: {
+			      style:'circle',//必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+			      color:'#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+			      height:'50px',//可选,默认50px.下拉刷新控件的高度,
+			      range:'100px', //可选 默认100px,控件可下拉拖拽的范围
+			      offset:'0px', //可选 默认0px,下拉刷新控件的起始位置
+			      auto: false,//可选,默认false.首次加载自动上拉刷新一次
+			      callback: refreshData //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			    },
+			    up: {
+			      auto: false,//可选,默认false.自动上拉加载一次
+			      contentrefresh : "正在加载...",//可选，正在加载状态时，上拉加载控件上显示的标题内容
+			      contentnomore:'没有更多数据了',//可选，请求完毕若没有更多数据时显示的提醒内容；
+			      callback: loadMoreData //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			    } 
+			  }			   
+			});
+			
+			var name, detailPage;
+			mui.plusReady(function() {
+				plus.nativeUI.showWaiting('加载中...', {
+					width: '100px',
+					height: '100px'
+				})
+				// 预加载电影详情页面
+				detailPage = mui.preload({
+					id: 'movieDetail',
+					url: './html/movieDetail.html'
+				})
+				name = plus.webview.currentWebview().name
+				// 请求热映接口数据
+				mui.ajax('http://api.douban.com/v2/movie/search', {
+					type: 'get', 
+					data: {
+						q: name,
+						start: 0,
+						count: 10
+					},
+					dataType: 'json',
+					success(res) {
+						vm.movies = [];
+						vm.movies = convert(res.subjects);
+						mui('#refreshContainer').pullRefresh().endPulldown();
+						mui('#refreshContainer').pullRefresh().refresh(true);
+						plus.nativeUI.closeWaiting()
+
+					}
+				})
+//				mui('#refreshContainer').PullRefresh().pullupLoading()
+			})
+			
+			// 下拉刷新
+			function refreshData() { 
+				// 请求热映接口数据
+				mui.ajax('http://api.douban.com/v2/movie/search', {
+					type: 'get', 
+					data: {
+						q: name,
+						start: 0,
+						count: 10
+					},
+					dataType: 'json',
+					success(res) {
+						vm.movies = [];
+						vm.movies = convert(res.subjects);
+						mui('#refreshContainer').pullRefresh().endPulldown();
+						mui('#refreshContainer').pullRefresh().refresh(true);
+
+					}
+				})					
+			};
+			 
+			// 上拉加载
+			function loadMoreData() {
+				// 请求热映接口数据
+				mui.ajax('http://api.douban.com/v2/movie/search', {
+					type: 'get',
+					data: {
+						q: name,
+						start: vm.movies.length,
+						count: 10
+					},
+					dataType: 'json',
+					success(res) {
+						vm.movies = vm.movies.concat(convert(res.subjects));
+						mui('#refreshContainer').pullRefresh().endPullupToRefresh(vm.movies.length>=res.total);
+					}
+				})						
+			};	
+			
+			function convert(items) {
+				var newItems = [];
+				items.forEach(function(item) {
+					// 类型
+					var genres = item.genres.join('/');
+					// 导演
+					var directors = '';
+					for(var i=0; i<item.directors.length; i++) {
+						directors += item.directors[i].name;
+						if (i != item.directors.length - 1) {
+							directors += '/';
+						}
+					}
+					// 演员
+					var casts = '';
+					for(var i=0; i<item.casts.length; i++) {
+						casts += item.casts[i].name;
+						if (i != item.casts.length - 1) {
+							casts += '/';
+						}
+					}
+					newItems.push({
+						id: item.id,
+						title: item.title,
+						genres: genres, 
+						cover: item.images.large,
+						score: item.rating.average,
+						directors: directors,
+						casts: casts
+					})
+				})
+
+				return newItems;
+			}
+			
+			// 跳转电影详情
+			function openDetail(item){
+				// 触发目标窗口的自定义事件
+				mui.fire(detailPage, 'movieId', {
+					id: item.id
+				})
+				
+				mui.openWindow({
+					id: 'movieDetail',
+				})
+			};
+		</script>
+	</body>
+
+</html>

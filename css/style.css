@@ -1,0 +1,50 @@
+.dark-big {
+	color: #333;
+	font-size: 16px;
+}
+.dark-medium {
+	color: #333;
+	font-size: 14px;
+}
+.dark-small {
+	color: #333;
+	font-size: 12px;
+}
+.dark-micro {
+	color: #333;
+	font-size: 10px;
+}
+
+.gray-big {
+	color: #A2A2A2;
+	font-size: 16px;
+}
+.gray-medium {
+	color: #A2A2A2;
+	font-size: 14px;
+}
+.gray-small {
+	color: #A2A2A2;
+	font-size: 12px;
+}
+.gray-micro {
+	color: #A2A2A2;
+	font-size: 10px;
+}
+
+.orange-big {
+	color: #f60;
+	font-size: 16px;
+}
+.orange-medium{
+	color: #f60;
+	font-size: 14px;
+}
+.orange-small {
+	color: #f60;
+	font-size: 12px;
+}
+.orange-micro {
+	color: #f60;
+	font-size: 10px;
+}

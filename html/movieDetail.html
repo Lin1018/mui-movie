@@ -1,0 +1,243 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../css/style.css"/>
+		<style type="text/css">
+			.top-image-block {
+				text-align: center;
+				padding: 10px 0;
+				background: #3c3c3c;
+			}
+			.mui-bar-nav
+			{
+			    -webkit-box-shadow: none;
+			    box-shadow: none;
+			}
+			.mui-ellipsis-4
+			{
+			    display: -webkit-box;
+			    overflow: hidden;
+			
+			    white-space: normal !important;
+			    text-overflow: ellipsis;
+			    word-wrap: break-word;
+			    
+			    -webkit-line-clamp: 4;
+			    -webkit-box-orient: vertical;
+			}			
+			.top-img {
+				width:160px;
+				height: 240px;
+				vertical-align: top;
+			}
+			.movie-info {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				border-bottom: 1px solid #ccc;
+				margin: 0 15px;
+				padding: 15px 0;
+			}
+			.left-info {
+				display: flex;
+				flex-direction: column;
+			}
+			.right-info {
+				text-align: center;
+				display: flex;
+				flex-direction: column;
+				width: 60px;
+				height: 60px;
+				background: #fff;
+				box-shadow: 0 0 10px #aaa;
+			}
+			.title {
+				margin-top: 15px;
+			}
+			p {
+				margin: 0 15px;
+			}
+			.people-list {
+				display: flex;
+				align-items: center;
+				overflow: auto;
+				padding-left: 15px;
+				width: 100%;
+			}
+			.people-content {
+				margin-right: 10px;
+				flex: 1 0 80px;
+			}
+			.people-img {
+				width: 80px;
+				height: 100px;
+				margin-right: 10px;
+			}
+			.people-name {
+				width: 80px;
+				text-align: center;
+			}
+			.p-title {
+				width: 100%;
+				margin-left: 0;
+				padding: 0 15px;
+				line-height: 40px;
+				text-align: center;
+				background: #E6E6E6;
+			}
+			.avatar {
+				width: 30px;
+				height: 30px;
+				border-radius: 30px;
+				margin-right: 5px;
+			}
+			.date {
+				float: right;
+			}
+			.userinfo {
+				line-height: 30px;
+			}
+			.comment-text {
+				margin-left: 35px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="mui-container">
+			<header class="mui-bar mui-bar-nav">
+			    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			    <h1 class="mui-title">标题</h1>
+			</header>
+			
+			<div class="mui-content">
+				<div class="top-image-block">
+					<img :src="detailData.cover" class="top-img"/>
+				</div>
+				<div class="movie-info">
+					<div class="left-info">
+						<span class="dark-big">
+							{{detailData.title}}
+						</span>
+						<span class="gray-small">{{detailData.year}}/{{detailData.countries}}/{{detailData.genres}}</span>
+						<span class="gray-small">{{detailData.directors>0?detailData.directors[0].name:''}}</span>
+					</div>
+					<div class="right-info">
+						 <span class="gray-micro">豆瓣评分</span>
+						 <span class="orange-big" v-if="detailData.score>0">{{detailData.score}}</span>
+						 <span class="orange-micro" v-else>暂无评分</span> 
+						 <span class="gray-micro">{{detailData.ratingCount}}人</span>
+					</div>
+				</div>
+				<p class="gray-small title">剧情简介</p>
+				<p class="dark-medium mui-ellipsis-4">{{detailData.summary}}</p>
+				<p class="gray-small title">演员</p>
+				<div class="people-list">
+					<div class="people-content" v-for="item in detailData.casts" @click="actionDetail(item)">
+						<img class="people-img" :src="item.avatars.large" alt="" v-if="item.avatars"/>
+						<img class="people-img" src="../images/60x60.gif" alt="" v-else-if="item.name && !item.avatars"/>
+						<div class="dark-micro mui-ellipsis people-name">{{item.name}}</div>
+					</div>
+				</div>
+				<p class="dark-medium p-title">评论</p>
+				<ul class="mui-table-view">
+					<li class="mui-table-view-cell">
+						<img src="../images/ma.png" class="avatar mui-pull-left"/>
+						<div class="userinfo">
+							<span class="dark-medium">
+								昵称
+							</span>
+							<span class="gray-medium date">2018-12-09</span>
+						</div>
+						<p class="dark-medium comment-text">这里是我的评论啊，评论一下这部电影</p>
+					</li>
+				</ul>
+			</div>
+		</div>
+		
+		<script src="../js/mui.min.js"></script>
+		<script type="text/javascript" src="../js/vue.min.js"></script>
+		<script type="text/javascript">
+			var vm = new Vue({
+				el: '#mui-container',
+				data: {
+					detailData: getData()
+				},
+				methods: {
+					// 跳转演员详情
+					actionDetail(item){
+						mui.openWindow({
+							url: 'action.html',
+							id: 'action',
+							extras: {
+								castId: item.id
+							}
+						})					 
+					}
+				}
+			})
+			
+			mui.init();
+			
+			mui.plusReady(function() {
+				var self = plus.webview.currentWebview()
+				// 清空页面数据，滚到最顶部
+				self.addEventListener('hide', function() {
+					window.scrollTo(0, 0)
+					
+					vm.detailData = getData()
+				}, false)
+			})
+			
+			function getData(){		
+				return {
+					title: '',
+					cover: '',
+					score: '',
+					ratingCount: '',
+					summary: '',
+					countries: '',
+					year: '',
+					genres: '',
+					casts: [],
+					directors: []
+				}
+			}
+			
+			// 添加movieId自定义事件
+			window.addEventListener('movieId', function(event){
+				var id = event.detail.id;
+				plus.nativeUI.showWaiting('加载中...', {
+					width: '100px',
+					height: '100px'
+				})
+				
+				
+				mui.ajax('https://api.douban.com/v2/movie/subject/' + id, {
+					type: 'get',
+					dataType: 'json',
+					success(res) {
+						vm.detailData.title = res.title
+						vm.detailData.cover = res.images.large
+						vm.detailData.score = res.rating.average
+						vm.detailData.ratingCount = res.ratings_count,
+						vm.detailData.summary = res.summary,
+						vm.detailData.countries = res.countries.join('/')
+						vm.detailData.year = res.year
+						vm.detailData.genres = res.genres.join('/')
+						vm.detailData.casts = res.casts
+						vm.detailData.directors = res.directors
+						
+						plus.nativeUI.closeWaiting()
+					}
+				})				
+			}) 
+		</script>
+	</body>
+
+</html>

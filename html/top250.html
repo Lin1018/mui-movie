@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../css/style.css"/>
+		<style type="text/css">
+			.mui-bar {
+				box-shadow: none;
+			}
+			body, .mui-content {
+				background: #fff;
+				position: relative;
+			}
+			.top-nav {
+				position: fixed;
+				top: 44px;
+				left: 0;
+				z-index: 9999;
+				background: #fff;
+			}
+			.line {
+				height: 0.5px;
+				background: #c4c4c4;
+			}
+			.cover-img {
+				width: 60px;
+				height: 90px;
+				margin-right: 10px;
+			}
+			.movie-list {
+				border: 1px solid #E9EBE8;
+				margin: 20px;
+				padding: 10px;
+			}
+			.num {
+				margin-top: 40px;
+				text-align: center;
+				font-size: 20px;
+			}
+			.mui-scroll-wrapper {
+				position: absolute;
+				top: 84.5px;
+				bottom: 0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+		    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+		    <h1 class="mui-title">豆瓣Top250</h1>
+		</header>
+		
+		<div id="mui-content" class="mui-content">
+			<div class="top-nav">
+				<div id="nav" class="mui-segmented-control mui-segmented-control-inverted gray-medium">
+					<a href="#" class="mui-control-item mui-active" tabindex="0">Top1-50</a>
+					<a href="#" class="mui-control-item" tabindex="1">51-100</a>
+					<a href="#" class="mui-control-item" tabindex="2">101-150</a>
+					<a href="#" class="mui-control-item" tabindex="3">151-200</a>
+					<a href="#" class="mui-control-item" tabindex="4">201-250</a>
+				</div>
+				<div class="line"></div>
+			</div>
+			
+			<div class="mui-scroll-wrapper">
+			    <div id="refreshContainer" class="mui-scroll">
+					<ul class="mui-table-view">
+						<li class="movie-content mui-table-view-cell" v-for="(item, index) in movies">
+							<div class="orange-big num">{{index+1+id*50}}</div>
+							<div class="movie-list" @tap="openDetail(item)">
+								<img :src="item.images.large" alt="" class="cover-img mui-pull-left"/>
+								<div class="dark-big">
+									<span>{{item.title}}</span>
+								</div>
+								<div class="orange-small">
+									<span class="gray-small">豆瓣评分：</span>
+									<span v-if="item.rating.average>0">{{item.rating.average}}</span>
+									<span v-else>{{item.rating.average}}</span>
+								</div>
+								<div class="gray-small mui-ellipsis">
+									<span>导演：{{item.directors | initName}}</span>
+								</div>
+								<div class="gray-small mui-ellipsis">
+									<span>演员：{{item.casts | initName}}</span>
+								</div>
+							</div>
+						</li>
+					</ul>
+			    </div>
+			</div>
+		</div>
+		
+		<script src="../js/mui.min.js"></script>
+		<script type="text/javascript" src="../js/vue.min.js"></script>
+		<script type="text/javascript">
+			var vm = new Vue({
+				el: '#mui-content',
+				data: {
+					movies: [],
+					id: 0
+				},
+				filters: {
+					// 拼接导演或演员名字
+					initName(arr) {
+						var res = ''
+						for (var i=0; i<arr.length; i++){
+							if (i == arr.length-1) {
+								res += arr[i].name
+								break
+							}
+							res += arr[i].name + '/'
+						}
+						return res
+					}
+				}
+			})
+			mui.init({  
+			  pullRefresh: {
+			    container:"#refreshContainer",//下拉刷新容器标识，querySelector能定位的css选择器均可，比如：id、.class等
+			    down: {
+			      style:'circle',//必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+			      color:'#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+			      height:'50px',//可选,默认50px.下拉刷新控件的高度,
+			      range:'100px', //可选 默认100px,控件可下拉拖拽的范围
+			      offset:'0px', //可选 默认0px,下拉刷新控件的起始位置
+			      auto: false,//可选,默认false.首次加载自动上拉刷新一次
+			      callback: refreshData //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			    },
+			    up: {
+			      auto: false,//可选,默认false.自动上拉加载一次
+			      contentrefresh : "正在加载...",//可选，正在加载状态时，上拉加载控件上显示的标题内容
+			      contentnomore:'没有更多数据了',//可选，请求完毕若没有更多数据时显示的提醒内容；
+			      callback: loadMoreData //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			    } 
+			  }			   
+			});
+			
+			// 跳转电影详情
+			function openDetail(item){
+				// 触发目标窗口的自定义事件
+				mui.fire(detailPage, 'movieId', {
+					id: item.id
+				})
+				
+				mui.openWindow({
+					id: 'movieDetail',
+				})
+			};
+			
+			var detailPage
+			mui.plusReady(function() {
+				plus.nativeUI.showWaiting('加载中...', {
+					width: '100px',
+					height: '100px' 
+				})
+				
+				detailPage = mui.preload({
+					id: 'movieDetail',
+					url: './html/movieDetail.html'					
+				})
+			})
+			
+			// 顶部点击时间切换Top排行
+			mui('#nav').on('tap', 'a', function() {
+				plus.nativeUI.showWaiting('加载中...', {
+					width: '100px',
+					height: '100px'
+				})
+				mui.scrollTo(0, 1)
+				var topStart = this.getAttribute('tabindex')
+				vm.id = topStart
+				mui.ajax('https://api.douban.com/v2/movie/top250', {
+					type: 'get',
+					data: {
+						start: vm.id * 50,
+						count: 10
+					},
+					dataType: 'json',
+					success(res) {
+						vm.movies = res.subjects
+						plus.nativeUI.closeWaiting()
+					}
+				})			
+			})
+			
+			mui.ajax('https://api.douban.com/v2/movie/top250', {
+				type: 'get',
+				data: {
+					start: 0,
+					count: 10
+				},
+				dataType: 'json',
+				success(res) {
+					vm.movies = res.subjects
+					plus.nativeUI.closeWaiting()
+				}
+			})
+			
+			function refreshData() {
+				mui.ajax('https://api.douban.com/v2/movie/top250', {
+					type: 'get',  
+					data: {
+						start: vm.id * 50,
+						count: 10
+					},
+					dataType: 'json',
+					success(res) {
+						vm.movies = res.subjects
+						mui('#refreshContainer').pullRefresh().endPulldown();
+					}
+				})						
+			}
+			
+			function loadMoreData() {
+				if (vm.movies.length == 50) {
+					return
+				}
+				mui.ajax('https://api.douban.com/v2/movie/top250', {
+					type: 'get',  
+					data: {
+						start: vm.movies.length + vm.id*50,
+						count: 10
+					},
+					dataType: 'json',
+					success(res) {
+						vm.movies = vm.movies.concat(res.subjects)
+						mui('#refreshContainer').pullRefresh().endPullupToRefresh(vm.movies.length>=50);
+					}
+				})				
+			}
+		</script>
+	</body>
+
+</html>

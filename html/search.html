@@ -1,0 +1,151 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<style type="text/css">
+			.search-ipt {
+				width: 80%;
+				display: inline-block;
+				padding-left: 15px;
+				margin-top: 15px;
+				text-align: center;
+			}
+			.cancel {
+				width: 20%;
+				text-align: center;
+				float: right;
+				line-height: 30px;
+				color: #2A7CF8;
+				font-size: 16px;
+				margin-top: 15px;
+			}
+			.search-history {
+				font-size: 12px;
+				color: #888;
+				background: #E6E6E6;
+				padding: 5px 15px;
+			}
+			.clear {
+				color: #2A7CF8;
+				float: right;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="mui-content" class="mui-content">
+		    <div class="search-ipt">
+		    	<div class="mui-input-row mui-search">
+		    		<input type="search" id="search" class="mui-input-clear" placeholder="电影/电视剧/演员"/>
+		    	</div>
+		    </div>
+		    <span id="cancel" class="cancel">取消</span>
+		    
+		    <div class="search-history">
+		    	<span>搜索记录</span>
+		    	<span id="clear" class="clear">清除</span>
+		    </div>
+		    
+	    	<ul class="mui-table-view">
+	    		<li class="mui-table-view-cell" v-for="item in records" @click="openResult(item)">
+	    			{{item}}
+	    		</li>
+	    	</ul>
+		</div>
+		<script src="../js/mui.min.js"></script>
+		<script type="text/javascript" src="../js/vue.min.js"></script>
+		<script type="text/javascript">
+			var vm = new Vue({
+				el: '#mui-content',
+				data: {
+					records: []
+				},
+				methods: {
+					openResult(item) {
+						mui.openWindow({
+							url: './searchResult.html',
+							id: 'searchResult',
+							extras: {
+								name: item
+							}
+						})
+						
+						 this.records.remove(item)
+						 this.records.splice(0, 0, item)
+					}
+				}
+			})
+			
+			mui.init()
+			
+			mui('#cancel')[0].addEventListener('tap', function() {
+				mui.back()
+			})
+			
+			mui('#clear')[0].addEventListener('tap', function() {
+				plus.storage.setItem('histroy', '')
+				vm.records = []
+			})
+			
+			mui.plusReady(function() {
+				if (plus.storage.getItem('history') !== '') {
+					vm.records = plus.storage.getItem('history').split(',')
+				}
+			})
+			
+			// 新增属性
+			Array.prototype.contains = function(obj) {
+				var i = this.length
+				while(i--) {
+					if (this[i] === obj) {
+						return true
+					}
+				}
+				return false
+			}
+			Array.prototype.indexOf = function(val) {
+				 for(var i=0; i<this.length; i++) {
+				 	if (this[i] == val) {
+				 		return i
+				 	}
+				 }
+				 
+				 return -1
+			}
+			Array.prototype.remove = function(val) {
+				var index = this.indexOf(val)
+				if (index > -1) {
+					this.splice(index, 1)
+				}
+			}
+			
+			// 键盘事件
+			document.onkeydown = function(event) {
+				var e = event || window.event || arguments.caller.arguments[0]
+				if (e && e.keyCode == 13) {
+					// 回车事件
+					var value = document.getElementById('search').value
+					if (vm.records.contains(value)) {
+						vm.records.remove(value)
+					}
+					
+					vm.records.splice(0, 0, value)
+					plus.storage.setItem('history', vm.records.toString())
+					// 跳转到搜索结果页面
+					mui.openWindow({
+						url: './searchResult.html',
+						id: 'searchResult',
+						extras: {
+							name: value
+						}
+					})
+				}
+			}
+		</script>
+	</body>
+
+</html>

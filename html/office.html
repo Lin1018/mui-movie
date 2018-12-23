@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../css/style.css"/>
+		<style type="text/css">
+			.mui-bar {
+				box-shadow: none;
+			}
+			body, .mui-content {
+				background: #fff;
+				position: relative;
+			}
+			.cover-img {
+				width: 60px;
+				height: 90px;
+				margin-right: 10px;
+			}
+			.movie-list {
+				border: 1px solid #E9EBE8;
+				margin: 20px;
+				padding: 10px;
+			}
+			.box {
+				margin: 0 20px;
+			}
+			.num {
+				margin-top: 40px;
+				text-align: center;
+				font-size: 20px;
+			}
+			.mui-scroll-wrapper {
+				position: absolute;
+				top: 84.5px;
+				bottom: 0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+		    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+		    <h1 class="mui-title">北美票房榜</h1>
+		</header>
+		<div id="mui-content" class="mui-content">
+			<div class="mui-scroll-wrapper">
+			    <div id="refreshContainer" class="mui-scroll">
+					<ul class="mui-table-view">
+						<li class="movie-content mui-table-view-cell" v-for="(item, index) in movies">
+							<div class="orange-big num">{{index+1}}</div>
+							<div class="movie-list" @tap="openDetail(item)">
+								<img :src="item.subject.images.large" alt="" class="cover-img mui-pull-left"/>
+								<div class="dark-big">
+									<span>{{item.subject.title}}</span>
+								</div>
+								<div class="orange-small">
+									<span class="gray-small">豆瓣评分：</span>
+									<span v-if="item.subject.rating.average>0">{{item.subject.rating.average}}</span>
+									<span v-else>{{item.subject.rating.average}}</span>
+								</div>
+								<div class="gray-small mui-ellipsis">
+									<span>导演：{{item.subject.directors | initName}}</span>
+								</div>
+								<div class="gray-small mui-ellipsis">
+									<span>演员：{{item.subject.casts | initName}}</span>
+								</div>
+							</div>
+							<div class="box"><span class="gray-medium">票房：</span><span class="orange-medium">{{item.box}}</span></div>
+						</li>
+					</ul>
+			    </div>
+			</div>
+		</div>
+		<script src="../js/mui.min.js"></script>
+		<script type="text/javascript" src="../js/vue.min.js"></script>
+		<script type="text/javascript">
+			var vm = new Vue({
+				el: '#mui-content',
+				data: {
+					movies: []
+				},
+				filters: {
+					// 拼接导演或演员名字
+					initName(arr) {
+						var res = ''
+						for (var i=0; i<arr.length; i++){
+							if (i == arr.length-1) {
+								res += arr[i].name
+								break
+							}
+							res += arr[i].name + '/'
+						}
+						return res
+					}
+				}
+			})
+			mui.init({  
+			  pullRefresh: {
+			    container:"#refreshContainer",//下拉刷新容器标识，querySelector能定位的css选择器均可，比如：id、.class等
+			    down: {
+			      style:'circle',//必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+			      color:'#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+			      height:'50px',//可选,默认50px.下拉刷新控件的高度,
+			      range:'100px', //可选 默认100px,控件可下拉拖拽的范围
+			      offset:'0px', //可选 默认0px,下拉刷新控件的起始位置
+			      auto: false,//可选,默认false.首次加载自动上拉刷新一次
+			      callback: refreshData //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			    }
+			  }			   
+			});
+			
+			// 跳转电影详情
+			function openDetail(item){
+				// 触发目标窗口的自定义事件
+				mui.fire(detailPage, 'movieId', {
+					id: item.subject.id
+				})
+				
+				mui.openWindow({
+					id: 'movieDetail',
+				})
+			};
+			
+			var detailPage
+			mui.plusReady(function() {
+				plus.nativeUI.showWaiting('加载中...', {
+					width: '100px',
+					height: '100px' 
+				})
+				
+				detailPage = mui.preload({
+					id: 'movieDetail',
+					url: './movieDetail.html'					
+				})
+			})
+			
+			mui.ajax('https://api.douban.com/v2/movie/us_box', {
+				type: 'get',
+				dataType: 'json',
+				success(res) {
+					vm.movies = res.subjects
+					plus.nativeUI.closeWaiting()
+				}
+			})
+			
+			function refreshData() {
+				mui.ajax('https://api.douban.com/v2/movie/us_box', {
+					type: 'get',  
+					dataType: 'json',
+					success(res) {
+						vm.movies = res.subjects
+						mui('#refreshContainer').pullRefresh().endPulldown();
+					}
+				})
+			}
+		</script>
+	</body>
+
+</html>

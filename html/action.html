@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+		<link href="../css/mui.min.css" rel="stylesheet" />
+		<link rel="stylesheet" type="text/css" href="../css/style.css"/>
+	</head>
+	<style type="text/css">
+		.mui-bar-nav{
+		    -webkit-box-shadow: none;
+		    box-shadow: none;
+		}	
+		.top-image-block {
+			padding: 10px 0;
+			text-align: center;
+			background: #2FD8D8;
+		}
+		.action-img {
+			width:160px;
+			height: 240px;		
+		}
+		.userinfo {
+			padding: 10px;
+		}
+		.info {
+			margin-top: 15px;
+		}
+		.info p {
+			margin: 0;
+		}
+		.skill {
+			width: 100%;
+			display: flex;
+			align-items: center;
+			overflow-x: auto;
+		}
+		.skill-list{
+			flex: 1 0 80px;
+			text-align: center;
+			margin-right: 10px;
+		}
+		.skill-img {
+			width: 80px;
+			height: 100px;
+			margin-right: 10px;			
+		}
+		.skill-wrap {
+			margin-top: 15px;
+		}
+		.skill-list p {
+			margin: 0;
+		}
+	</style>
+
+	<body>
+		<div id="action-detail">
+			<header class="mui-bar mui-bar-nav">
+			    <a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			    <h1 class="mui-title">演员详情</h1>
+			</header>
+			
+			<div class="mui-content">
+				<div class="top-image-block">
+					<img :src="actionDetail.avatar" class="action-img"/>
+				</div>
+				
+				<div class="userinfo">
+					<div class="dark-big username">
+						<span>{{actionDetail.cname}}</span>	
+					</div>
+					<div class="gray-medium username">
+						<span>{{actionDetail.ename}}</span>	
+					</div>
+					<div class="info">
+						<p class="gray-small">个人简介</p>
+						<p class="dark-medium info-text mui-ellipsis">{{actionDetail.userinfo}}</p>
+					</div>	
+					
+					<div class="gray-small skill-wrap">
+						<span>
+							代表作品
+						</span>
+					</div>
+					<div class="skill">
+						<div class="skill-list" v-for="item in actionDetail.skillList">
+							<img :src="item.subject.images.large" alt="" class="skill-img"/>
+							<p class="dark-small mui-ellipsis">{{item.subject.title}}</p>
+							<p class="orange-small">{{item.subject.rating.average}}</p>
+						</div>
+					</div>						
+				</div>			
+			</div>
+		</div>
+		
+		<script src="../js/mui.min.js"></script>
+		<script type="text/javascript" src="../js/vue.min.js"></script>
+		<script type="text/javascript">
+			var vm = new Vue({
+				el: '#action-detail',
+				data: {
+					actionDetail: getActionData()
+				}
+			})
+			
+			mui.init()
+			
+			mui.plusReady(function() {
+				var self = plus.webview.currentWebview()
+				
+				// 清空页面数据，滚到最顶部(不是预加载的页面，不需要初始化滚动条和清空数据)
+//				self.addEventListener('close', function() {
+//					window.scrollTo(0, 0)
+//					
+//					vm.detailData = getActionData()
+//				}, false)
+				
+				plus.nativeUI.showWaiting('加载中...', {
+					width: '100px',
+					height: '100px'
+				})
+				
+				var castId = self.castId
+				mui.ajax('http://api.douban.com/v2/movie/celebrity/' + castId, {
+					type: 'get',
+					dataType: 'json',
+					success(res) {
+						vm.actionDetail.cname = res.name
+						vm.actionDetail.ename = res.name_en
+						vm.actionDetail.avatar = res.avatars.large
+						vm.actionDetail.skillList = res.works
+						vm.actionDetail.userinfo = res.name + ', ' + res.gender + ', ' + res.born_place
+						
+						plus.nativeUI.closeWaiting()
+					}
+				})
+			})
+			
+			function getActionData() {
+				return {
+					cname: '',
+					ename: '',
+					userinfo: '',
+					avatar: '',
+					skillList: {}
+				}
+			}
+		</script>
+	</body>
+
+</html>

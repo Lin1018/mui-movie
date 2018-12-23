@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>Hello MUI</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
+		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" href="../css/style.css" />
+		<style>
+			html,
+			body {
+				background-color: #fff;
+			}
+			.mui-content {
+				background: #fff;
+				box-sizing: border-box;
+			}
+			.mui-slider-indicator {
+				bottom: 0px;
+			}
+			.mui-slider-indicator .mui-active {
+				background: #f60!important;
+			}
+			
+			.group {
+				margin: 20px 0;
+				display: flex;
+				width: 100%;
+				height: 150px;
+			}
+			.item {
+				width: 50%;
+				height: 100%;
+				padding: 0 15px;
+			}
+			.item-content {
+				width: 100%;
+				height: 100%;
+				border-radius: 10px;
+				text-align: center;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				font-size: 18px;
+				color: #fff;
+			}
+			.item-one {
+				background: linear-gradient(#941Ae6, #f1e0fc);
+			}
+			.item-two {
+				background: linear-gradient(#3370cc, #F1B0FC);
+			}
+			.dark-medium {
+				margin-left: 15px;
+			}
+			.cover-img {
+				width: 60px;
+				height: 90px;
+				margin-right: 10px;
+			}
+			.directors {
+				margin-right: 60px;
+			}
+			.orange-small {
+				margin-left: 10px;
+			}
+		</style>
+	</head> 
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+		    <h1 class="mui-title">榜单</h1>
+		</header>
+		
+		<div id="mui-content" class="mui-content">
+			<div class="mui-slider">
+			  <div class="mui-slider-group mui-slider-loop">
+			  	<div class="mui-slider-item"><a href="#"><img src="../images/banner3.jpg" /></a></div>
+			    <div class="mui-slider-item"><a href="#"><img src="../images/banner1.jpg" /></a></div>
+			    <div class="mui-slider-item"><a href="#"><img src="../images/banner2.jpg" /></a></div>
+			    <div class="mui-slider-item"><a href="#"><img src="../images/banner3.jpg" /></a></div>
+			    <div class="mui-slider-item"><a href="#"><img src="../images/banner1.jpg" /></a></div>
+			  </div>
+			  
+    		  <div class="mui-slider-indicator">
+                <div class="mui-indicator mui-active"></div>
+                <div class="mui-indicator"></div>
+                <div class="mui-indicator"></div>
+              </div>			  
+			</div>	
+			<div class="group">
+				<div class="item">
+					<div class="item-content item-one" @tap="to250">
+						<span>豆瓣Top250</span>
+					</div>
+				</div>
+				<div class="item">
+					<div class="item-content item-two" @tap="toOffice">
+						<span>北美票房榜</span>
+					</div>
+				</div>
+			</div>
+			
+			<div class="dark-medium">
+				即将上映
+			</div>
+			<div id="refreshContainer" class="mui-scroll-wrapper">
+				<ul class="mui-table-view">
+					<li class="mui-table-view-cell" v-for="item in movies" @tap="openDetail(item)">
+						<img :src="item.images.large" class="cover-img mui-pull-left"/>
+						<div class="movie-info">
+							<div class="dark-big mui-ellipsis">{{item.title}}</div>
+							<div class="gray-small mui-ellipsis">
+								<span v-if="item.genres.length>0">{{item.genres.join('/')}}</span>
+								<span v-else>未知</span>
+								<span class="orange-small" v-if="item.rating.average>0">
+									{{item.rating.average}}分
+								</span>
+								<span class="orange-small" v-else>
+									暂无评分
+								</span>
+							</div>
+							<div class="gray-small mui-ellipsis directors">
+								<span>导演：{{item.directors | initName}}</span>
+							</div>
+							<div class="gray-small mui-ellipsis">
+								<span>主演：<span v-if="item.casts.length>0">{{item.casts | initName}}</span><span v-else>未知</span></span>
+								
+							</div>
+						</div>
+						<button class="mui-btn mui-btn-warning mui-btn-outlined">想看</button>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<script src="../js/mui.min.js"></script>
+		<script type="text/javascript" src="../js/vue.min.js"></script>
+		<script>
+			var vm = new Vue({
+				el: '#mui-content',
+				data: {
+					movies: []
+				},
+				filters: {
+					// 拼接导演或演员名字
+					initName(arr) {
+						var res = ''
+						for (var i=0; i<arr.length; i++){
+							if (i == arr.length-1) {
+								res += arr[i].name
+								break
+							}
+							res += arr[i].name + '/'
+						}
+						return res
+					}
+				}
+			})
+			
+			mui.init({  
+			  pullRefresh: {
+			    container:"#refreshContainer",//下拉刷新容器标识，querySelector能定位的css选择器均可，比如：id、.class等
+			    down: {
+			      style:'circle',//必选，下拉刷新样式，目前支持原生5+ ‘circle’ 样式
+			      color:'#2BD009', //可选，默认“#2BD009” 下拉刷新控件颜色
+			      height:'50px',//可选,默认50px.下拉刷新控件的高度,
+			      range:'100px', //可选 默认100px,控件可下拉拖拽的范围
+			      offset:'0px', //可选 默认0px,下拉刷新控件的起始位置
+			      auto: false,//可选,默认false.首次加载自动上拉刷新一次
+			      callback: refreshData //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			    },
+			    up: {
+			      auto: false,//可选,默认false.自动上拉加载一次
+			      contentrefresh : "正在加载...",//可选，正在加载状态时，上拉加载控件上显示的标题内容
+			      contentnomore:'没有更多数据了',//可选，请求完毕若没有更多数据时显示的提醒内容；
+			      callback: loadMoreData //必选，刷新函数，根据具体业务来编写，比如通过ajax从服务器获取新数据；
+			    } 
+			  }			   
+			});
+			var detailPage;
+			mui.plusReady(function() {
+				plus.nativeUI.showWaiting('加载中', {
+					width: '100px',
+					height: '100px'
+				})
+				// 预加载电影详情页面
+				detailPage = mui.preload({
+					id: 'movieDetail',
+					url: './html/movieDetail.html'
+				})				
+			})
+			
+			mui('.mui-slider').slider({
+				interval: 2000
+			})
+			
+			// 跳转电影详情
+			function openDetail(item){
+				// 触发目标窗口的自定义事件
+				mui.fire(detailPage, 'movieId', {
+					id: item.id
+				})
+				
+				mui.openWindow({
+					id: 'movieDetail',
+				})
+			};		
+			
+			mui.ajax('http://api.douban.com/v2/movie/coming_soon', {
+				type: 'get',
+				data: {
+					start: 0,
+					count: 20
+				},
+				dataType: 'json',
+				success(res) {
+					vm.movies = res.subjects
+				}
+			})
+			// 下拉刷新
+			function refreshData() { 
+				// 请求热映接口数据
+				mui.ajax('http://api.douban.com/v2/movie/coming_soon', {
+					type: 'get', 
+					data: {
+						start: 0,
+						count: 20,
+					},
+					dataType: 'json', 
+					success(res) {
+						vm.movies = res.subjects
+						mui('#refreshContainer').pullRefresh().endPulldown();
+					}
+				})					
+			};
+			
+			// 上拉加载
+			function loadMoreData() {
+				// 请求热映接口数据
+				mui.ajax('http://api.douban.com/v2/movie/coming_soon', {
+					type: 'get',
+					data: {
+						start: vm.movies.length,
+						count: 20,
+					},
+					dataType: 'json',
+					success(res) {
+						vm.movies = vm.movies.concat(res.subjects)
+						mui('#refreshContainer').pullRefresh().endPullupToRefresh(vm.movies.length>=res.total);
+					}
+				})						
+			};
+
+			function to250() {
+				mui.openWindow({
+					id: 'top250',
+					url: './top250.html',
+					waiting: {
+						autoShow: true,
+						title: '加载中...'
+					}
+				})
+			}
+			
+			function toOffice() {
+				mui.openWindow({
+					id: 'office',
+					url: './office.html',
+					waiting: {
+						autoShow: true,
+						title: '加载中...'
+					}
+				})				
+			}
+		</script>
+	</body>
+</html>
